@@ -38,35 +38,37 @@ export default function Header() {
 
   return (
     <header className="header">
-      <Link to="/" className="logo" aria-label="Waves home">
-        <span className="logo-mark">
-          <Music2 size={18} />
-        </span>
-        <span className="logo-text">Waves</span>
-      </Link>
+      <div className='header-content'>
+        <Link to="/" className="logo" aria-label="Waves home">
+          <span className="logo-mark">
+            <Music2 size={18} />
+          </span>
+          <span className="logo-text">Waves</span>
+        </Link>
 
-      <form className="search" onSubmit={submit} role="search">
-        <Search size={18} aria-hidden="true" />
-        <input
-          type="search"
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          placeholder="Search songs, albums, artists…"
-          aria-label="Search"
-          maxLength={100}
-        />
-        {value && (
-          <button type="button" className="icon-btn" aria-label="Clear search" onClick={() => setValue('')}>
-            <X size={16} />
+        <form className="search" onSubmit={submit} role="search">
+          <Search size={18} aria-hidden="true" />
+          <input
+            type="search"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            placeholder="Search songs, albums, artists…"
+            aria-label="Search"
+            maxLength={100}
+          />
+          {value && (
+            <button type="button" className="icon-btn" aria-label="Clear search" onClick={() => setValue('')}>
+              <X size={16} />
+            </button>
+          )}
+        </form>
+
+        {canInstall && (
+          <button className="btn install-btn" onClick={install} aria-label="Install app">
+            <Download size={16} /> <span>Install</span>
           </button>
         )}
-      </form>
-
-      {canInstall && (
-        <button className="btn install-btn" onClick={install} aria-label="Install app">
-          <Download size={16} /> <span>Install</span>
-        </button>
-      )}
+      </div>
     </header>
   );
 }

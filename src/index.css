@@ -45,11 +45,16 @@ h1, h2, p { margin: 0; }
 .header {
   position: sticky; top: 0; z-index: 30;
   height: calc(var(--header-h) + var(--safe-t));
-  display: flex; align-items: center; gap: 20px;
-  padding: var(--safe-t) var(--pad) 0;
   background: rgba(11, 11, 16, .85);
   backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--border);
+}
+.header-content {
+  max-width: 1400px; 
+  margin: 0 auto;
+  height: 100%;
+  padding: var(--safe-t) var(--pad) 0;
+  display: flex; align-items: center; gap: 20px;
 }
 .logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 20px; }
 .logo-mark { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 10px; background: var(--grad); }
@@ -255,7 +260,7 @@ h1, h2, p { margin: 0; }
 @keyframes sheet-in { from { transform: translateY(100%); } to { transform: none; } }
 
 /* ---------- PWA ---------- */
-.install-btn { padding: 8px 14px; font-size: 14px; flex: none; }
+.install-btn { padding: 8px 14px; font-size: 14px; flex: none; margin-left: auto; }
 .pwa-banner {
   position: fixed; z-index: 55; left: 12px; right: 12px; margin: 0 auto; max-width: 520px;
   bottom: calc(var(--safe-b) + 12px);
