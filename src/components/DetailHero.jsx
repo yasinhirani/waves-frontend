@@ -1,7 +1,7 @@
 import { Play, Shuffle } from 'lucide-react';
 import { getImage } from '../utils/format';
 
-export default function DetailHero({ image, kind, title, lines = [], round = false, onPlay, onShuffle, disabled }) {
+export default function DetailHero({ image, kind, title, lines = [], round = false, onPlay, onShuffle, disabled, hideShuffle = false }) {
   return (
     <div className="hero">
       <img className={`hero-img ${round ? 'round' : ''}`} src={getImage(image, '500x500')} alt={title} />
@@ -17,9 +17,11 @@ export default function DetailHero({ image, kind, title, lines = [], round = fal
           <button className="btn btn-primary" onClick={onPlay} disabled={disabled}>
             <Play size={18} fill="currentColor" /> Play
           </button>
-          <button className="btn" onClick={onShuffle} disabled={disabled}>
-            <Shuffle size={18} /> Shuffle
-          </button>
+          {!hideShuffle && (
+            <button className="btn" onClick={onShuffle} disabled={disabled}>
+              <Shuffle size={18} /> Shuffle
+            </button>
+          )}
         </div>
       </div>
     </div>

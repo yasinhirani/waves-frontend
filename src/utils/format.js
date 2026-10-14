@@ -44,7 +44,7 @@ export const getPrimaryArtists = (song) => song?.more_info?.artistMap?.primary_a
 
 export const artistText = (song) => {
   const names = getPrimaryArtists(song).map((a) => a.name).filter(Boolean);
-  return names.length ? names.join(', ') : song?.subtitle || song?.more_info?.music || '';
+  return names.length ? names.join(', ') : song?.subtitle || song?.more_info?.music || song?.more_info?.show_title || '';
 };
 
 export const routeFor = (item) => {
@@ -57,8 +57,8 @@ export const routeFor = (item) => {
       return `/playlist/${token}`;
     case 'artist':
       return `/artist/${token}`;
-    case 'radio_station':
-      return `/artist/${token}`;
+    case 'show':
+      return `/podcast/${token}`;
     default:
       return null;
   }
@@ -73,4 +73,23 @@ export const parseBio = (bio) => {
     /* not JSON */
   }
   return bio.trim().startsWith('[') ? '' : bio;
+};
+
+/** 336 -> "6 min", 3900 -> "1 hr 5 min" (podcast episodes) */
+export const formatEpisodeDuration = (seconds) => {
+  const n = Number(seconds);
+  if (!Number.isFinite(n) || n <= 0) return '';
+  const mins = Math.max(1, Math.round(n / 60));
+  return mins < 60 ? `${mins} min` : `${Math.floor(mins / 60)} hr${mins % 60 ? ` ${mins % 60} min` : ''}`;
+};
+
+export const formatDate = (iso) => {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' });
+};
+
+/** Podcast episodes are a single MP3: every "quality" link is the same URL (no bitrate ladder). */
+export const hasSingleSource = (song) => {
+  const links = song?.downloadUrl;
+  return Array.isArray(links) && links.length > 0 && new Set(links.map((l) => l.url)).size === 1;
 };

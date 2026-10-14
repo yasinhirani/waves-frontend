@@ -65,19 +65,54 @@ export const usePlayerStore = create(
         quality: qualityFromConnection(), // target for upcoming tracks; managed automatically
         shuffle: false,
         repeat: 'off', // 'off' | 'all' | 'one'
+        isRadio: false,
+        radioStationId: null,
 
         playQueue: (songs, startIndex = 0) => {
           const playable = songs.filter(hasAudio);
           if (!playable.length) return;
           const startId = songs[startIndex]?.id;
           const idx = Math.max(0, playable.findIndex((s) => s.id === startId));
-          commit({ queue: playable, index: idx, isPlaying: true });
+          commit({ queue: playable, index: idx, isPlaying: true, isRadio: false, radioStationId: null });
         },
 
         playShuffled: (songs) => {
           const playable = songs.filter(hasAudio);
           if (!playable.length) return;
-          commit({ queue: playable, index: randomIndex(playable.length, -1), isPlaying: true, shuffle: true });
+          commit({
+            queue: playable,
+            index: randomIndex(playable.length, -1),
+            isPlaying: true,
+            shuffle: true,
+            isRadio: false,
+            radioStationId: null
+          });
+        },
+
+        // Radio: starts from a freshly fetched batch of (effectively random) songs for a station.
+        playRadio: (stationId, songs) => {
+          const playable = songs.filter(hasAudio);
+          if (!playable.length) return;
+          commit({
+            queue: playable,
+            index: 0,
+            isPlaying: true,
+            isRadio: true,
+            radioStationId: stationId,
+            shuffle: false,
+            repeat: 'off'
+          });
+        },
+
+        // Called by the engine once it fetches the next batch for the current station. Silently ignored
+        // once the station changes or regular playback starts (isRadio/radioStationId no longer match).
+        appendRadioSongs: (newSongs) => {
+          const { queue, isRadio, radioStationId } = get();
+          if (!isRadio || !radioStationId) return;
+          const seen = new Set(queue.map((s) => s.id));
+          const playable = newSongs.filter((s) => hasAudio(s) && !seen.has(s.id));
+          if (!playable.length) return;
+          commit({ queue: [...queue, ...playable] });
         },
 
         togglePlay: () => {
@@ -122,7 +157,16 @@ export const usePlayerStore = create(
           queue = queue.slice(start, start + MAX_PERSISTED_QUEUE);
           index -= start;
         }
-        return { volume: s.volume, muted: s.muted, shuffle: s.shuffle, repeat: s.repeat, queue, index };
+        return {
+          volume: s.volume,
+          muted: s.muted,
+          shuffle: s.shuffle,
+          repeat: s.repeat,
+          queue,
+          index,
+          isRadio: s.isRadio,
+          radioStationId: s.radioStationId
+        };
       },
       merge: (persisted, current) => {
         const merged = { ...current, ...persisted, quality: current.quality, isPlaying: false };

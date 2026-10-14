@@ -259,8 +259,20 @@ h1, h2, p { margin: 0; }
 .sheet .icon-btn { width: 44px; height: 44px; }
 @keyframes sheet-in { from { transform: translateY(100%); } to { transform: none; } }
 
+/* ---------- podcast episodes ---------- */
+.episode-row { display: grid; grid-template-columns: 32px 48px minmax(0, 1fr); gap: 14px; align-items: start; padding: 12px; border-radius: 10px; cursor: pointer; }
+.episode-row .song-index, .episode-row .song-thumb { margin-top: 2px; }
+.episode-row:hover { background: var(--surface); }
+.episode-row.active { background: var(--surface-2); }
+.episode-row.active .episode-title { color: var(--accent); }
+.episode-row.disabled { opacity: .45; }
+.episode-body { display: flex; flex-direction: column; min-width: 0; }
+.episode-title { font-weight: 600; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.episode-meta { color: var(--muted); font-size: 13px; margin-top: 2px; }
+.episode-desc { color: var(--muted); font-size: 13px; margin-top: 6px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+
 /* ---------- PWA ---------- */
-.install-btn { padding: 8px 14px; font-size: 14px; flex: none; margin-left: auto; }
+.install-btn { padding: 8px 14px; font-size: 14px; flex: none; }
 .pwa-banner {
   position: fixed; z-index: 55; left: 12px; right: 12px; margin: 0 auto; max-width: 520px;
   bottom: calc(var(--safe-b) + 12px);
@@ -307,7 +319,8 @@ h1, h2, p { margin: 0; }
   .section-arrows { display: none; }
   .card-play { opacity: 1; transform: none; width: 38px; height: 38px; right: 8px; bottom: 8px; }
   .card:hover .card-cover img { transform: none; }
-  .song-row:hover { background: transparent; }
+  .song-row:hover, .episode-row:hover { background: transparent; }
+  .episode-row.active:hover { background: var(--surface-2); }
   .song-row.active:hover { background: var(--surface-2); }
   .icon-btn:hover { background: transparent; }
   .icon-btn { width: 40px; height: 40px; }

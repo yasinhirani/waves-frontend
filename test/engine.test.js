@@ -159,3 +159,102 @@ describe('end of queue, repeat and OS interruptions', () => {
     expect(JSON.parse(localStorage.getItem('waves-position'))).toEqual({ id: '1', t: 42 });
   });
 });
+
+describe('podcast (single-source) tracks', () => {
+  const ep = (id) => ({ ...mk(id), downloadUrl: ['12', '48', '96', '160', '320'].map((b) => ({ quality: `${b}kbps`, url: `https://hub/${id}.mp3` })) });
+
+  it('reports "original" quality and ignores stalls (nothing lower to switch to)', async () => {
+    const { usePlaybackStore } = await import('../src/store/playbackStore');
+    store.getState().playQueue([ep('p1'), ep('p2')], 0);
+    const a = engine.getAudio();
+    expect(usePlaybackStore.getState().activeQuality).toBe('original');
+    const before = store.getState().quality;
+    setTime(a, 5);
+    fire(a, 'waiting');
+    fire(a, 'waiting');
+    fire(a, 'waiting');
+    expect(a.src).toContain('p1.mp3'); // not reloaded
+    expect(store.getState().quality).toBe(before); // music quality untouched by podcast stalls
+  });
+
+  it('uses the show title for the lock-screen album', () => {
+    store.getState().playQueue([{ ...ep('p3'), more_info: { ...mk('p3').more_info, album: undefined, show_title: 'My Show' } }], 0);
+    expect(navigator.mediaSession.metadata.album).toBe('My Show');
+  });
+});
+
+describe('radio stations: continuous, no visible queue, tops itself up', () => {
+  const rsong = (id) => mk(id);
+
+  beforeEach(() => {
+    store.setState({ queue: [], index: -1, upNext: -1, isPlaying: false, isRadio: false, radioStationId: null });
+  });
+
+  it('starts playing the first song immediately, like a normal queue of one station', () => {
+    store.getState().playRadio('STID1', [rsong('a'), rsong('b')]);
+    expect(engine.getAudio().src).toContain('a_160');
+    expect(store.getState().isPlaying).toBe(true);
+    expect(store.getState().isRadio).toBe(true);
+  });
+
+  it('fetches more songs once the LAST queued track is playing, and appends them without interrupting playback', async () => {
+    const fetchMore = vi.spyOn(await import('../src/api/music'), 'fetchMoreRadioSongs').mockResolvedValue([rsong('c'), rsong('d')]);
+    store.getState().playRadio('STID1', [rsong('a'), rsong('b')]);
+    const a = engine.getAudio();
+    setTime(a, 1); // not yet the last track being neared -> still only 2 in queue
+    fire(a, 'timeupdate');
+    expect(fetchMore).not.toHaveBeenCalled();
+
+    handlers.nexttrack(); // now on the LAST queued track ("b")
+    setTime(engine.getAudio(), 5);
+    fire(engine.getAudio(), 'timeupdate');
+    expect(fetchMore).toHaveBeenCalledWith('STID1');
+    await flush();
+    expect(store.getState().queue.map((s) => s.id)).toEqual(['a', 'b', 'c', 'd']);
+
+    // ended -> continues synchronously into the newly appended song, same as any other track change
+    fire(engine.getAudio(), 'ended');
+    expect(store.getState().index).toBe(2);
+    expect(engine.getAudio().src).toContain('c_160');
+    expect(store.getState().isPlaying).toBe(true);
+    fetchMore.mockRestore();
+  });
+
+  it('does not fetch again while a fetch is already in flight, and drops duplicate songs the station resends', async () => {
+    const api = await import('../src/api/music');
+    let resolveFetch;
+    const fetchMore = vi.spyOn(api, 'fetchMoreRadioSongs').mockImplementation(() => new Promise((r) => { resolveFetch = r; }));
+    store.getState().playRadio('STID1', [rsong('a')]);
+    const a = engine.getAudio();
+    setTime(a, 5);
+    fire(a, 'timeupdate');
+    fire(a, 'timeupdate'); // still on the last track, still in flight -> must not fire a second request
+    expect(fetchMore).toHaveBeenCalledTimes(1);
+    resolveFetch([rsong('a'), rsong('e')]); // "a" is a duplicate of what's already queued
+    await flush();
+    expect(store.getState().queue.map((s) => s.id)).toEqual(['a', 'e']);
+    fetchMore.mockRestore();
+  });
+
+  it('stops gracefully (no crash) if the "more songs" request fails', async () => {
+    const api = await import('../src/api/music');
+    const fetchMore = vi.spyOn(api, 'fetchMoreRadioSongs').mockRejectedValue(new Error('network'));
+    store.getState().playRadio('STID1', [rsong('a')]);
+    const a = engine.getAudio();
+    setTime(a, 5);
+    fire(a, 'timeupdate');
+    await flush();
+    expect(store.getState().queue).toHaveLength(1); // nothing appended
+    fire(a, 'ended'); // nothing queued after it -> playback just stops, same as end of a normal queue
+    expect(store.getState().isPlaying).toBe(false);
+    fetchMore.mockRestore();
+  });
+
+  it('starting a normal queue or shuffle afterwards clears radio mode', () => {
+    store.getState().playRadio('STID1', [rsong('a'), rsong('b')]);
+    expect(store.getState().isRadio).toBe(true);
+    store.getState().playQueue([rsong('x'), rsong('y')], 0);
+    expect(store.getState().isRadio).toBe(false);
+    expect(store.getState().radioStationId).toBeNull();
+  });
+});

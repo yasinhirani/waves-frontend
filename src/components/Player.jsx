@@ -21,6 +21,7 @@ export default function Player() {
   const muted = usePlayerStore((s) => s.muted);
   const shuffle = usePlayerStore((s) => s.shuffle);
   const repeat = usePlayerStore((s) => s.repeat);
+  const isRadio = usePlayerStore((s) => s.isRadio);
   const { togglePlay, next, setVolume, toggleMute, toggleShuffle, cycleRepeat } = usePlayerStore.getState();
 
   const currentTime = usePlaybackStore((s) => s.time);
@@ -70,7 +71,8 @@ export default function Player() {
   const RepeatIcon = repeat === 'one' ? Repeat1 : Repeat;
   const effectiveVolume = muted ? 0 : volume;
   const subtitle = error || (song ? artistText(song) : '');
-  const qualityLabel = `${bitrateOf(activeQuality)} kbps`;
+  // const qualityLabel = activeQuality === 'original' ? 'Original' : `${bitrateOf(activeQuality)} kbps`;
+  const subtitleWithRadio = isRadio ? `Radio · ${subtitle}` : subtitle;
 
   // ---------- shared pieces ----------
   const playButton = (size) => (
@@ -105,9 +107,11 @@ export default function Player() {
 
   const transport = (
     <div className="player-controls">
-      <button className={`icon-btn ${shuffle ? 'on' : ''}`} aria-label="Shuffle" aria-pressed={shuffle} onClick={toggleShuffle}>
-        <Shuffle size={18} />
-      </button>
+      {!isRadio && (
+        <button className={`icon-btn ${shuffle ? 'on' : ''}`} aria-label="Shuffle" aria-pressed={shuffle} onClick={toggleShuffle}>
+          <Shuffle size={18} />
+        </button>
+      )}
       <button className="icon-btn" aria-label="Previous" onClick={previous}>
         <SkipBack size={20} fill="currentColor" />
       </button>
@@ -115,9 +119,11 @@ export default function Player() {
       <button className="icon-btn" aria-label="Next" onClick={() => next()}>
         <SkipForward size={20} fill="currentColor" />
       </button>
-      <button className={`icon-btn ${repeat !== 'off' ? 'on' : ''}`} aria-label={`Repeat ${repeat}`} onClick={cycleRepeat}>
-        <RepeatIcon size={18} />
-      </button>
+      {!isRadio && (
+        <button className={`icon-btn ${repeat !== 'off' ? 'on' : ''}`} aria-label={`Repeat ${repeat}`} onClick={cycleRepeat}>
+          <RepeatIcon size={18} />
+        </button>
+      )}
     </div>
   );
 
@@ -131,7 +137,7 @@ export default function Player() {
           <img src={getImage(song.image, '150x150')} alt="" />
           <div className="player-meta">
             <span className="player-title">{song.title}</span>
-            <span className="player-artist">{subtitle}</span>
+            <span className="player-artist">{subtitleWithRadio}</span>
           </div>
         </div>
 
@@ -141,9 +147,9 @@ export default function Player() {
         </div>
 
         <div className="player-extra">
-          <span className="player-quality" title="Audio quality adjusts automatically to your connection">
+          {/* <span className="player-quality" title="Audio quality adjusts automatically to your connection">
             {qualityLabel}
-          </span>
+          </span> */}
           <button className="icon-btn" aria-label={muted ? 'Unmute' : 'Mute'} onClick={toggleMute}>
             {effectiveVolume === 0 ? <VolumeX size={18} /> : <Volume2 size={18} />}
           </button>
@@ -172,7 +178,7 @@ export default function Player() {
           <img src={getImage(song.image, '150x150')} alt="" />
           <span className="player-meta">
             <span className="player-title">{song.title}</span>
-            <span className="player-artist">{subtitle}</span>
+            <span className="player-artist">{subtitleWithRadio}</span>
           </span>
         </button>
         <div className="mini-actions">
@@ -196,12 +202,12 @@ export default function Player() {
               <ChevronDown size={26} />
             </button>
             <span>Now Playing</span>
-            <span className="player-quality">{qualityLabel}</span>
+            {/* <span className="player-quality">{qualityLabel}</span> */}
           </div>
           <img className="sheet-art" src={getImage(song.image, '500x500')} alt={song.title} />
           <div className="sheet-meta">
             <h2>{song.title}</h2>
-            <p>{subtitle}</p>
+            <p>{subtitleWithRadio}</p>
           </div>
           {seekBar}
           {transport}

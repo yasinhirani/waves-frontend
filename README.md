@@ -3,9 +3,9 @@
 Vite + React 18 + React Router + TanStack Query + Zustand. Talks to the JioSaavn Express backend.
 
 ## Features
-- Home: **New Trending, Top Playlists, New Albums, Charts, Recommended Artists, Top in Your City** (scrollable rows, hover-play)
+- Home: **New Trending, Top Playlists, New Albums, Charts, Podcasts, Radio Stations, Recommended Artists, Top in Your City** (scrollable rows, hover-play)
 - Search (songs / albums / playlists / artists) with debounce, URL-shareable state and load-more
-- Album, playlist (paginated) and artist pages
+- Album, playlist (paginated), artist and **podcast** pages (seasons, episodes with duration/plays, play-all)
 - Player: play/pause, next/prev, seek, volume/mute, shuffle, repeat (off/all/one), automatic bitrate (48–320 kbps) based on connection type, measured download speed and stalls,
   queue from any list, Media Session (lock screen / media keys), Space bar shortcut, auto-skip on broken tracks
 - **Installable PWA** (manifest, icons, offline app shell, cached API/images, update prompt, install button, iOS hint)
@@ -39,6 +39,8 @@ docker run -p 8080:80 waves-web
 - Serve over HTTPS (or localhost). `sw.js` and `manifest.webmanifest` must not be cached long (see `nginx.conf`).
 - Test with `npm run build && npm run preview`, then Chrome DevTools → Application → Manifest / Service Workers.
 - If the API is on another origin, allow it in the backend `CORS_ORIGINS`.
+
+- **Radio stations**: tap to play instantly (no detail page) - one call starts the station and plays a random-feeling stream; the player fetches and appends more songs on its own as the queue runs low, forever
 
 ## Tests
 `npm test` – includes regression tests for background track-advance, pre-loading, repeat/shuffle and lock-screen controls.

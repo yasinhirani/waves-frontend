@@ -3,12 +3,12 @@ import { Play } from 'lucide-react';
 import { usePlayItem } from '../hooks/usePlayItem';
 import { getImage, getImageSrcSet, routeFor } from '../utils/format';
 
-const PLAYABLE = ['song', 'album', 'playlist'];
+const PLAYABLE = ['song', 'album', 'playlist', 'show', 'radio_station'];
 
 function ContentLink({ item, play, className, children }) {
   const route = routeFor(item);
   if (route) return <Link to={route} className={className}>{children}</Link>;
-  if (item.type === 'song')
+  if (item.type === 'song' || item.type === 'radio_station')
     return (
       <button type="button" className={className} onClick={() => play(item)}>
         {children}

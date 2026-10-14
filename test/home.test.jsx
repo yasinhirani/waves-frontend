@@ -14,7 +14,11 @@ const home = {
     { id: 'a2', name: 'Shreya Ghoshal', perma_url: 'https://www.jiosaavn.com/artist/shreya/ART2', token: 'ART2', image: img } // no type
   ],
   city_mod: { data: [{ id: 'm1', title: 'Top in Pune', token: 'PUNE', image: img }] }, // wrapped + no type
-  radio: [{ id: 'r1', title: 'Should Not Appear', type: 'radio_station', image: img }],
+  'promo:vx:data:107': [
+    { id: 's1', title: 'Shri Krishna Amritvani', type: 'show', token: 'SHOW1', image: img },
+    { id: 'x1', title: 'Promo That Is Not A Show', type: 'song', token: 'NOPE', image: img }
+  ],
+  radio: [{ id: 'r1', title: 'Chill Karo', type: 'radio_station', image: img, more_info: { language: 'hindi' } }],
   browse_discover: [{ id: 'b1', title: 'Also Hidden', image: img }]
 };
 
@@ -30,13 +34,20 @@ const renderHome = () =>
   );
 
 describe('HomePage', () => {
-  it('shows exactly the six configured sections, in order', async () => {
+  it('shows exactly the eight configured sections, in order', async () => {
     renderHome();
     await screen.findByText('Trending One');
     const headings = screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent);
-    expect(headings).toEqual(['New Trending', 'Top Playlists', 'New Albums', 'Charts', 'Recommended Artists', 'Top in Your City']);
+    expect(headings).toEqual(['New Trending', 'Top Playlists', 'New Albums', 'Charts', 'Podcasts', 'Radio Stations', 'Recommended Artists', 'Top in Your City']);
     expect(screen.queryByText('Should Not Appear')).toBeNull();
     expect(screen.queryByText('Also Hidden')).toBeNull();
+  });
+
+  it('podcasts come from promo:vx:data:107, only shows, and link to the podcast page', async () => {
+    renderHome();
+    await screen.findByText('Shri Krishna Amritvani');
+    screen.getAllByRole('link', { name: 'Shri Krishna Amritvani' }).forEach((l) => expect(l.getAttribute('href')).toBe('/podcast/SHOW1'));
+    expect(screen.queryByText('Promo That Is Not A Show')).toBeNull();
   });
 
   it('artist recommendations are round cards linking to the artist page (even without a type)', async () => {

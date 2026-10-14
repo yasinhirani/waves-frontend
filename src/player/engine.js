@@ -14,8 +14,9 @@
  */
 import { usePlayerStore } from '../store/playerStore';
 import { usePlaybackStore } from '../store/playbackStore';
-import { artistText, getImage, pickDownloadUrl } from '../utils/format';
+import { artistText, getImage, hasSingleSource, pickDownloadUrl } from '../utils/format';
 import { attachAdaptiveBitrate } from './adaptive';
+import { fetchMoreRadioSongs } from '../api/music';
 
 const SILENT_WAV = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
 const PRELOAD_AFTER_SECONDS = 3;
@@ -37,6 +38,10 @@ let cur = 0;
 export const getAudio = () => players[cur];
 const spare = () => players[1 - cur];
 
+// Podcast episodes have one MP3 (no bitrate ladder): report 'original' and skip adaptive-quality logic
+const qualityFor = (song, target) => (hasSingleSource(song) ? 'original' : target);
+const currentSong = () => state().queue[state().index];
+
 let curSongId = null;
 let curQuality = null;
 let preloaded = null; // { songId, url, quality } loaded into spare()
@@ -45,6 +50,7 @@ let errorStreak = 0;
 let lastSaved = 0;
 let pendingResume = readPosition();
 let adaptive = null;
+let radioFetchInFlight = false;
 
 /* ---------------- persistence of the playback position ---------------- */
 function readPosition() {
@@ -124,7 +130,7 @@ function updateMediaSession(song) {
     navigator.mediaSession.metadata = new MediaMetadata({
       title: song.title,
       artist: artistText(song),
-      album: song.more_info?.album || '',
+      album: song.more_info?.album || song.more_info?.show_title || '',
       artwork: [
         { src: getImage(song.image, '150x150'), sizes: '150x150', type: 'image/jpeg' },
         { src: getImage(song.image, '500x500'), sizes: '500x500', type: 'image/jpeg' }
@@ -171,6 +177,25 @@ function setupMediaSession() {
   });
 }
 
+/* ---------------- radio: keep the queue topped up ---------------- */
+function ensureRadioSongs() {
+  const { isRadio, radioStationId, queue, index, upNext } = state();
+  if (!isRadio || !radioStationId || radioFetchInFlight) return;
+  if (upNext >= 0) return; // the next track is already queued
+  if (index !== queue.length - 1) return; // only top up once we're playing the last queued track
+  radioFetchInFlight = true;
+  fetchMoreRadioSongs(radioStationId)
+    .then((songs) => {
+      if (state().radioStationId === radioStationId) state().appendRadioSongs(songs);
+    })
+    .catch(() => {
+      /* network hiccup: playback simply stops at the end of the current track, same as a normal queue */
+    })
+    .finally(() => {
+      radioFetchInFlight = false;
+    });
+}
+
 /* ---------------- loading / switching tracks ---------------- */
 function stopAll() {
   curSongId = null;
@@ -202,9 +227,9 @@ function loadCurrent() {
   const resumeAt = pendingResume && pendingResume.id === song.id ? pendingResume.t || 0 : 0;
   pendingResume = null;
   preloaded = null;
-  curQuality = quality;
+  curQuality = qualityFor(song, quality);
   setSource(a, url, resumeAt);
-  playback.setState({ activeQuality: quality, time: resumeAt, duration: 0, buffering: isPlaying, error: '' });
+  playback.setState({ activeQuality: curQuality, time: resumeAt, duration: 0, buffering: isPlaying, error: '' });
   if (isPlaying) safePlay(a);
 }
 
@@ -258,7 +283,7 @@ function maybePreload() {
   const a = spare();
   a.preload = 'auto';
   a.src = url;
-  preloaded = { songId: next.id, url, quality };
+  preloaded = { songId: next.id, url, quality: qualityFor(next, quality) };
 }
 
 /* ---------------- public actions ---------------- */
@@ -280,11 +305,13 @@ export function stepDownQuality(q) {
   const { queue, index, isPlaying } = state();
   const song = queue[index];
   if (!song) return;
+  const url = pickDownloadUrl(song.downloadUrl, q);
   const a = getAudio();
+  if (hasSingleSource(song) || a.getAttribute('src') === url) return; // nothing lower to switch to
   const resumeAt = a.currentTime;
   curQuality = q;
   playback.setState({ activeQuality: q, buffering: true });
-  setSource(a, pickDownloadUrl(song.downloadUrl, q), resumeAt);
+  setSource(a, url, resumeAt);
   if (isPlaying) safePlay(a);
   preloaded = null; // it was fetched at the old quality
   maybePreload();
@@ -299,6 +326,7 @@ function bindElementEvents(a) {
     playback.setState({ time: a.currentTime, duration: a.duration || 0 });
     savePosition();
     if (a.currentTime > PRELOAD_AFTER_SECONDS) maybePreload();
+    ensureRadioSongs();
   });
   a.addEventListener('loadedmetadata', () => {
     if (!isCurrent()) return;
@@ -374,6 +402,7 @@ function init() {
     elements: players,
     getCurrent: getAudio,
     getActiveQuality: () => curQuality ?? state().quality,
+    isFixed: () => hasSingleSource(currentSong()),
     stepDown: stepDownQuality
   });
 

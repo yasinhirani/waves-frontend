@@ -7,6 +7,7 @@ const SearchPage = lazy(() => import('./pages/SearchPage'));
 const AlbumPage = lazy(() => import('./pages/AlbumPage'));
 const PlaylistPage = lazy(() => import('./pages/PlaylistPage'));
 const ArtistPage = lazy(() => import('./pages/ArtistPage'));
+const PodcastPage = lazy(() => import('./pages/PodcastPage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
 export default function App() {
@@ -18,6 +19,7 @@ export default function App() {
         <Route path="album/:token" element={<AlbumPage />} />
         <Route path="playlist/:token" element={<PlaylistPage />} />
         <Route path="artist/:token" element={<ArtistPage />} />
+        <Route path="podcast/:token" element={<PodcastPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>

@@ -22,7 +22,7 @@ const bufferedEnd = (a) => {
  *  3. on repeated stalls / very slow start -> drop quality immediately (keeps playback position)
  * Only events of the element that is currently playing are considered.
  */
-export function attachAdaptiveBitrate({ elements, getCurrent, getActiveQuality, stepDown }) {
+export function attachAdaptiveBitrate({ elements, getCurrent, getActiveQuality, stepDown, isFixed = () => false }) {
   const { setQuality } = usePlayerStore.getState();
   const s = { last: null, ema: null, samples: 0, stalls: [], holdUntil: 0, loadStartedAt: null };
 
@@ -49,17 +49,17 @@ export function attachAdaptiveBitrate({ elements, getCurrent, getActiveQuality, 
       s.loadStartedAt = performance.now();
     },
     playing: () => {
-      if (a !== getCurrent() || s.loadStartedAt == null) return;
+      if (a !== getCurrent() || isFixed() || s.loadStartedAt == null) return;
       const took = performance.now() - s.loadStartedAt;
       s.loadStartedAt = null;
       if (took > SLOW_START_MS && !a.seeking) registerStall(); // very slow start counts as a stall
     },
     waiting: () => {
-      if (a !== getCurrent() || a.seeking || a.currentTime < 0.5) return; // ignore normal start-up / seeks
+      if (a !== getCurrent() || isFixed() || a.seeking || a.currentTime < 0.5) return; // ignore normal start-up / seeks
       registerStall();
     },
     progress: () => {
-      if (a !== getCurrent()) return;
+      if (a !== getCurrent() || isFixed()) return;
       const now = performance.now();
       const end = bufferedEnd(a);
       if (!s.last) {

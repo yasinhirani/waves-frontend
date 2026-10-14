@@ -10,7 +10,7 @@ const song = {
   id: '1', title: 'One', subtitle: 'S',
   image: [{ quality: '150x150', url: 'https://x/1.jpg' }, { quality: '500x500', url: 'https://x/1.jpg' }],
   more_info: { duration: '200', artistMap: { primary_artists: [{ id: 'a', name: 'Artist', token: 't' }] } },
-  downloadUrl: [{ quality: '160kbps', url: 'https://x/1_160.mp4' }]
+  downloadUrl: [{ quality: '160kbps', url: 'https://x/1_160.mp4' }, { quality: '320kbps', url: 'https://x/1_320.mp4' }]
 };
 
 beforeAll(() => {

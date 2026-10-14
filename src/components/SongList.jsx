@@ -21,7 +21,7 @@ function ArtistLinks({ song }) {
   ));
 }
 
-const Equalizer = () => (
+export const Equalizer = () => (
   <span className="eq" aria-label="Playing">
     <i />
     <i />
