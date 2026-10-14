@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
-  ChevronDown, Loader2, Pause, Play, Repeat, Repeat1, Shuffle, SkipBack, SkipForward, Volume2, VolumeX
+  ChevronDown, Disc3, Loader2, Pause, Play, Repeat, Repeat1, Shuffle, SkipBack, SkipForward, Volume2, VolumeX
 } from 'lucide-react';
 import { usePlayerStore } from '../store/playerStore';
 import { usePlaybackStore } from '../store/playbackStore';
 import { previous, seekTo } from '../player/engine';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import { bitrateOf } from '../utils/adaptive';
-import { artistText, formatDuration, getImage } from '../utils/format';
+import { artistText, formatDuration, getAlbumToken, getImage } from '../utils/format';
 
 /**
  * Pure UI. All audio logic (loading, next-track, pre-loading, media session…) lives in
@@ -28,10 +29,11 @@ export default function Player() {
   const mediaDuration = usePlaybackStore((s) => s.duration);
   const buffering = usePlaybackStore((s) => s.buffering);
   const error = usePlaybackStore((s) => s.error);
-  const activeQuality = usePlaybackStore((s) => s.activeQuality);
+  // const activeQuality = usePlaybackStore((s) => s.activeQuality);
 
   const song = queue[index];
   const duration = mediaDuration || Number(song?.more_info?.duration) || 0;
+  const albumToken = song && getAlbumToken(song);
 
   // Phones / small tablets get a mini player + full-screen "Now Playing" sheet
   const isMobile = useMediaQuery('(max-width: 900px)');
@@ -133,13 +135,23 @@ export default function Player() {
   if (!isMobile) {
     return (
       <div className="player" role="region" aria-label="Music player">
-        <div className="player-track">
-          <img src={getImage(song.image, '150x150')} alt="" />
-          <div className="player-meta">
-            <span className="player-title">{song.title}</span>
-            <span className="player-artist">{subtitleWithRadio}</span>
+        {albumToken && !isRadio ? (
+          <Link to={`/album/${albumToken}`} className="player-track album-link" title="Go to album">
+            <img src={getImage(song.image, '150x150')} alt="" />
+            <div className="player-meta">
+              <span className="player-title">{song.title}</span>
+              <span className="player-artist">{subtitleWithRadio}</span>
+            </div>
+          </Link>
+        ) : (
+          <div className="player-track">
+            <img src={getImage(song.image, '150x150')} alt="" />
+            <div className="player-meta">
+              <span className="player-title">{song.title}</span>
+              <span className="player-artist">{subtitleWithRadio}</span>
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="player-center">
           {transport}
@@ -208,6 +220,11 @@ export default function Player() {
           <div className="sheet-meta">
             <h2>{song.title}</h2>
             <p>{subtitleWithRadio}</p>
+            {albumToken && !isRadio && (
+              <Link to={`/album/${albumToken}`} className="sheet-album-link" onClick={() => setExpanded(false)}>
+                <Disc3 size={14} /> Go to Album
+              </Link>
+            )}
           </div>
           {seekBar}
           {transport}

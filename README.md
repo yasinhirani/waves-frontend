@@ -42,5 +42,7 @@ docker run -p 8080:80 waves-web
 
 - **Radio stations**: tap to play instantly (no detail page) - one call starts the station and plays a random-feeling stream; the player fetches and appends more songs on its own as the queue runs low, forever
 
+- **Go to Album**: on desktop, the cover/title in the player links straight to the album when one exists (no extra button); on mobile, a small "Go to Album" link sits in the full-screen Now Playing sheet and closes it on tap. Hidden entirely for radio/podcast tracks with no album.
+
 ## Tests
 `npm test` – includes regression tests for background track-advance, pre-loading, repeat/shuffle and lock-screen controls.

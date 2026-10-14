@@ -64,6 +64,13 @@ export const routeFor = (item) => {
   }
 };
 
+/** "https://www.jiosaavn.com/album/sanam/VmgbE5WLvYw_" -> "VmgbE5WLvYw_" (same shape as perma_url tokens) */
+export const getAlbumToken = (song) => {
+  const url = song?.more_info?.album_url;
+  if (typeof url !== 'string' || !url) return undefined;
+  return url.split('?')[0].split('/').filter(Boolean).pop();
+};
+
 export const parseBio = (bio) => {
   if (!bio || typeof bio !== 'string') return '';
   try {
