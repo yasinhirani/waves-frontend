@@ -50,7 +50,8 @@ export const artistText = (song) => {
 export const routeFor = (item) => {
   const token = getToken(item);
   if (!token) return null;
-  switch (item.type) {
+  const type = item.type === 'radio_station' && item?.more_info?.featured_station_type === 'artist' ? item?.more_info?.featured_station_type : item.type
+  switch (type) {
     case 'album':
       return `/album/${token}`;
     case 'playlist':
