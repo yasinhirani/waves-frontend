@@ -14,7 +14,7 @@ export function usePlayItem() {
 
   return useCallback(
     async (item) => {
-      if (item.type === 'radio_station') {
+      if (item.type === 'radio_station' && item?.more_info?.featured_station_type !== 'artist') {
         try {
           const { stationId, songs } = await startRadioStation(item.title || item.name, item.more_info?.language);
           if (!songs.some(hasAudio)) return toast.error('Nothing playable here');

@@ -19,7 +19,7 @@ function ContentLink({ item, play, className, children }) {
 
 export default function MediaCard({ item }) {
   const play = usePlayItem();
-  const round = item.type === 'artist';
+  const round = item.type === 'artist' || item?.more_info?.featured_station_type === 'artist';
   const title = item.title || item.name;
 
   return (
